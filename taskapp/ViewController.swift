@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import UserNotifications
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -24,9 +25,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        tableView.delegate = self
+        tableView.delegate = self //tableviewの仕事をviewControllerに委託している。（しないと開発者がカスタマイズできない）
         tableView.dataSource = self
-        
     }
 
     override func didReceiveMemoryWarning() {
@@ -37,11 +37,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     //MARK: UITableViewDataSourceプロトコルのメソッド
     //データの数（＝セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        //- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section;
         return taskArray.count
     }
     
     //各セルの内容を返すメソッド
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        //外部引数名＝省略　内部引数名＝tableview　型＝UITableView, 外部引数名＝cellForRowAt 内部引数名＝indexPath 型＝IndexPath　？？
+        //- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath;
         //再利用可能な cellを得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         //Cellに値を設定する。
@@ -72,10 +75,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     //Deleteボタンが押された時に呼ばれるメソッド
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
+            //削除されたタスクを取得する
+            let task = self.taskArray[indexPath.row]
+            //ローカル通知をキャンセルする
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: [String(task.id)])
             //データベースから削除する
             try! realm.write {
                 self.realm.delete(self.taskArray[indexPath.row])
                 tableView.deleteRows(at: [indexPath], with: .fade)
+            }
+            // 未通知のローカル通知一覧をログ出力
+            center.getPendingNotificationRequests { (requests: [UNNotificationRequest]) in
+                for request in requests {
+                    print("/---------------")
+                    print(request)
+                    print("---------------/")
+                }
             }
         }
     }
