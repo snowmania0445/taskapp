@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 import UserNotifications
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchResultsUpdating {
 
     @IBOutlet weak var tableView: UITableView!
     
@@ -21,12 +21,22 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     // 日付近い順\順でソート：降順
     // 以降内容をアップデートするとリスト内は自動的に更新される。
     var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: false)
+    var results : [Task] = []
+    var searchController = UISearchController()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        tableView.delegate = self //tableviewの仕事をviewControllerに委託している。（しないと開発者がカスタマイズできない）
+        tableView.delegate = self
         tableView.dataSource = self
+        
+        searchController = UISearchController(searchResultsController: nil)
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.sizeToFit()
+        searchController.dimsBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        
+        tableView.tableHeaderView = searchController.searchBar
     }
 
     override func didReceiveMemoryWarning() {
@@ -94,6 +104,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }
             }
         }
+    }
+    
+    //検索バーへの入力時の処理
+    func updateSearchResults(for searchController: UISearchController) {
+        let predicate = NSPredicate(format: "category CONTAINS %@", searchController.searchBar.text!)
+        let realm = try! Realm()
+        let searchResults = realm.objects(Task.self).filter(predicate)
+        results = []
+        searchResults.forEach { item in results.append(item)}
+        tableView.reloadData()
+        print(results)
+        print(searchResults)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?){
