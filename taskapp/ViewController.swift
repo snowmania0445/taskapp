@@ -48,19 +48,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     //データの数（＝セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         //- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section;
-        return taskArray.count
+        if searchController.isActive {
+            return results.count
+        } else {
+            return taskArray.count
+        }
     }
     
     //各セルの内容を返すメソッド
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        //外部引数名＝省略　内部引数名＝tableview　型＝UITableView, 外部引数名＝cellForRowAt 内部引数名＝indexPath 型＝IndexPath　？？
-        //- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath;
         //再利用可能な cellを得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         //Cellに値を設定する。
         let task = taskArray[indexPath.row]
-        cell.textLabel?.text = task.title
-
+        if searchController.isActive {
+            let showResult = results[indexPath.row]
+            cell.textLabel!.text = showResult.title
+        } else {
+            cell.textLabel?.text = task.title
+        }
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
         
@@ -114,8 +121,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         results = []
         searchResults.forEach { item in results.append(item)}
         tableView.reloadData()
-        print(results)
-        print(searchResults)
+        self.definesPresentationContext = true;
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?){
